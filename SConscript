@@ -45,6 +45,7 @@ for InputDB in ["ARDB","VF"]:
     stderrSim = oo.ftmp(InputDB + "sim.log")
     fastqSim = oo.ftmp(InputDB + "_single.fastq")
     fastaSim = oo.ftmp(InputDB + ".fasta")
+    fastaFinal = oo.ftmp(InputDB + "sim.fasta")
 
         
     #--Programs--#
@@ -72,5 +73,7 @@ for InputDB in ["ARDB","VF"]:
 
     oo.pipe(fastqSim,fastaSim,Fastq2Fasta)
     
-    Default(fastaSim)
-   
+    #Cut out excess text, reduce gene lables for spiked genes to ">USR_NAME_END"
+    oo.pipe(fastaSim,fastaFinal,"sed",e="s/^>.*\(USR_.*_END\).*$/>\\1/g")
+    Default(fastaFinal)
+    
