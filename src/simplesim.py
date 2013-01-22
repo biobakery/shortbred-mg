@@ -22,7 +22,8 @@ parser = argparse.ArgumentParser(description='ShortBRED Quantify \n This program
 
 
 parser.add_argument('--nucs', type=str, dest='sNucs', help='Enter the path and name of the nucleotide file.')
-parser.add_argument('--ub', type=int, dest='iUB', help='Enter the upper bound for the U(1,UB) draws for each gene.',default=10)
+parser.add_argument('--genomes', type=str, dest='sGenomes', help='Enter the path and name of the file containing the names of the full genomes.')
+parser.add_argument('--var', type=int, dest='iUB', help='Enter the upper bound for the U(1,UB) draws for each gene.',default=1)
 parser.add_argument('-N', type=int, dest='iN', help='Enter the number of genes to include in the file.',default =10)
 parser.add_argument('--gold', type=str, dest='sGold', help='Enter the path and name of the gold standard file.',default="goldstandard.txt")
 
@@ -50,9 +51,18 @@ for seq in SeqIO.parse(args.sNucs, "fasta"):
 #Choose N nucs randomly
 setPickedGenes = random.sample(set(dictNucs.keys()), args.iN)
 
+
+astrPickedGenomes = [line.strip() for line in open(args.sGenomes)]
+
+for strGeneName in astrPickedGenomes:
+    aGeneData = [strGeneName, random.lognormvariate(6.25,1), "NA","NA"]
+    aaGoldStandard.append(aGeneData)
+
+
+
 #Create an array of the percentages for the simulated genes
 for strGeneName in setPickedGenes:
-    aGeneData = [strGeneName, random.randint(1,args.iUB), len(dictNucs[strGeneName])]
+    aGeneData = [strGeneName, random.lognormvariate(1,args.iUB), len(dictNucs[strGeneName])]
     aGeneData.append(aGeneData[1]*aGeneData[2])
     aaGoldStandard.append(aGeneData)
 
@@ -61,6 +71,7 @@ for aLine in aaGoldStandard:
     fileGS.write(aLine[0]+ "\t" + str(aLine[1]) + "\t" +str(aLine[2]) + "\t" + str(aLine[3]) )
     fileGS.write("\n")
 
+"""
 astrGeneRepeats = []
 
 for aLine in aaGoldStandard:
@@ -84,8 +95,8 @@ fileGS.write("The shuffled and expanded genome file for " + args.sNucs + " conta
 fileGS.write("Input genes: " + str(len(setPickedGenes)) + "\n")
 fileGS.write("Gene copies: " + str(iTotGenes) + "\n")
 fileGS.write("Total bases: " + str(iTotBases) + "\n")
-
-#fileGS.close()
+"""
+fileGS.close()
 
 
 

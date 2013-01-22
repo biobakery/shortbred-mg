@@ -6,7 +6,7 @@
 # For more information, please see the following web page:
 # http://creativecommons.org/licenses/by/3.0/
 #
-# This file is a component of the SflE Scientific workFLow Environment for reproducible 
+# This file is a component of the SflE Scientific workFLow Environment for reproducible
 # research, authored by the Huttenhower lab at the Harvard School of Public Health
 # (contact Curtis Huttenhower, chuttenh@hsph.harvard.edu).
 #
@@ -31,9 +31,9 @@ oo = sfleoo.ooSfle(  fileDirOutput = fileDirOutput, fileDirTmp = fileDirTmp, fil
 
 
 for InputDB in ["ARDB","VF"]:
-    
-    #Insert code to create softlinks to my shuffled genomes!
-    
+
+    #<Insert code to create softlinks to my shuffled genomes>
+
     #--Input Files--#
     fnaNucs  = os.path.abspath(oo.fin(InputDB + "nucs.fna"))
     txtAbundance = os.path.abspath(oo.fin(InputDB + "abund.txt"))
@@ -47,33 +47,33 @@ for InputDB in ["ARDB","VF"]:
     fastaSim = oo.ftmp(InputDB + ".fasta")
     fastaFinal = oo.ftmp(InputDB + "sim.fasta")
 
-        
+
     #--Programs--#
     SimpleSim        = oo.fsrc("simplesim.py")
     GemReads	      = oo.fsrc("gemsim" + os.sep + "GemReads.py")
-    Fastq2Fasta      = oo.fsrc("fastq2fasta.py")							 
+    Fastq2Fasta      = oo.fsrc("fastq2fasta.py")
 
     #---Parameters---#
     stubGemSim = sfle.d(fileDirTmp,InputDB)
 
     #--Dirs------"
     dirGenomes = sfle.d("output","metagenome","tmp","genomes")
-    
- 
-    
- 
+
+
+
+
 
     #Make the genome file and gold standard file
     oo.pipe(fnaNucs,[fnaShuffledGenome,txtGS], SimpleSim,nucs=fnaNucs,N=100,gold=txtGS,ub=100)
     Default(fnaShuffledGenome)
-    
+
 
     #Incorporate it into a synthetic metagenome, with the other genomes in "input/genomes", using GemReads.py
     oo.pipe([txtAbundance, fnaShuffledGenome],[stderrSim,fastqSim],GemReads,R=dirGenomes, n=5000000,l=100, m=zipModel,c="",q=64,o=stubGemSim,a = txtAbundance )
 
     oo.pipe(fastqSim,fastaSim,Fastq2Fasta)
-    
+
     #Cut out excess text, reduce gene lables for spiked genes to ">USR_NAME_END"
     oo.pipe(fastaSim,fastaFinal,"sed",e="s/^>.*\(USR_.*_END\).*$/>\\1/g")
     Default(fastaFinal)
-    
+
