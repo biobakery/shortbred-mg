@@ -29,49 +29,57 @@ Import( "*" )
 oo = sfleoo.ooSfle(  fileDirOutput = fileDirOutput, fileDirTmp = fileDirTmp, fileDirInput=fileDirInput )
 
 
-
-for InputDB in ["ARDB","VF"]:
-
-    #<Insert code to create softlinks to my shuffled genomes>
+for strInputNucs in Glob(sfle.d(fileDirInput,"*nucs.fna")):
+	strDB	 		= os.path.basename(str(strInputNucs).replace( "nucs.fna", "" ))
+	print(strDB)
 
     #--Input Files--#
-	fnaNucs  = os.path.abspath(oo.fin(InputDB + "nucs.fna"))
+	fnaNucs  = os.path.abspath(oo.fin(strDB + "nucs.fna"))
 	zipModel = os.path.abspath(oo.fin("ill100v5_s.gzip") )
 	txtGenomes = os.path.abspath(oo.fin("GenomeNames.txt"))
+	fnaPadGenome = os.path.abspath(oo.fin("genomes" + os.sep + "b.longum.genome"))
+	file_out2 = oo.ftmp("out.genome")
 
     #--Tmp Files--#
-	txtGS    = oo.ftmp(InputDB + "gs.txt")
-	fnaShuffledGenome	= oo.ftmp("genomes" + os.sep + InputDB+ "shuf.fna")
-	stderrSim = oo.ftmp(InputDB + "sim.log")
-	fastqSim = oo.ftmp(InputDB + "_single.fastq")
-	fastaSim = oo.ftmp(InputDB + ".fasta")
-	fastaFinal = oo.ftmp(InputDB + "sim.fasta")
-	txtAbundance = (oo.ftmp(InputDB + "abund.txt"))
+	txtGS    = oo.ftmp(strDB + "gs.txt")
+	stderrSim = oo.ftmp(strDB + "sim.log")
+	fastqSim = oo.ftmp(strDB + "_single.fastq")
+	fastaSim = oo.ftmp(strDB + ".fasta")
+	fastaFinal = oo.ftmp(strDB + "sim.fasta")
+	txtAbundance = (oo.ftmp(strDB + "abund.txt"))
 
     #--Programs--#
 	SimpleSim        = oo.fsrc("simplesim.py")
 	GemReads	      = oo.fsrc("gemsim" + os.sep + "GemReads.py")
 	Fastq2Fasta      = oo.fsrc("fastq2fasta.py")
+	CPUnix = "cp"
 
     #---Parameters---#
-	stubGemSim = sfle.d(fileDirTmp,InputDB)
+	stubGemSim = sfle.d(fileDirTmp,strDB)
 
     #--Dirs------"
-	dirGenomes = sfle.d("output","metagenome","tmp","genomes")
+
+	dirGemSimRef   = sfle.d("output","metagenome","tmp","GSRefGenomes")
+
+	#Make dirFasta
+	#Make softlink to dirGenomes,put it in dirGemSimRef
 
 
     #Make individual fasta files for each gene, make the abundance table and gold standard
-	oo.pipe(fnaNucs,[txtAbundance,txtGS], SimpleSim,nucs=fnaNucs,N=150,muS=1,muG=6.25,gold=txtGS,genomes=txtGenomes,fastadir=dirGenomes,abund=txtAbundance)
- 	Default(txtAbundance)
+	oo.pipe(fnaNucs,[txtAbundance,txtGS], SimpleSim,nucs=fnaNucs,N=150,muS=1,muG=6.25,gold=txtGS,genomes=txtGenomes,fastadir=dirGemSimRef,abund=txtAbundance,padgenome=fnaPadGenome)
+	Default(txtAbundance)
 
 
-    #Incorporate it into a synthetic metagenome, with the other genomes in "input/genomes", using GemReads.py
-	oo.pipe([txtAbundance],[stderrSim,fastqSim],GemReads,R=dirGenomes, n=5000000,l=100, m=zipModel,c="",q=64,o=stubGemSim,a = txtAbundance )
+    #Incorporate individual nucs into a synthetic metagenome, along  with the other genomes in "input/genomes", using GemReads.py
+	oo.pipe([txtAbundance],[stderrSim,fastqSim],GemReads,R=dirGemSimRef, n=5000000,l=100, m=zipModel,c="",q=64,o=stubGemSim,a = txtAbundance )
+	Default(fastqSim)
+    #oo.pipe([txtAbundance],[stderrSim,fastqSim],GemReads,R=dirGenomes, n=5000000,l=100, m=zipModel,c="",q=64,o=stubGemSim,a = txtAbundance )
 
+	"""
 	oo.pipe(fastqSim,fastaSim,Fastq2Fasta)
 
     #Cut out excess text, reduce gene lables for spiked genes to ">USR_NAME_END"
 	oo.pipe(fastaSim,fastaFinal,"sed",e="s/^>.*\(USR_.*_END\).*$/>\\1/g")
  	Default(fastaFinal)
-
+	"""
 
