@@ -34,6 +34,7 @@ for strInputNucs in Glob(sfle.d(fileDirInput,"*nucs.fna")):
 	print(strDB)
 
     #--Input Files--#
+	faaProts = os.path.abspath(oo.fin(strDB + ".input.faa"))
 	fnaNucs  = os.path.abspath(oo.fin(strDB + "nucs.fna"))
 	zipModel = os.path.abspath(oo.fin("ill100v5_s.gzip") )
 	txtGenomes = os.path.abspath(oo.fin("GenomeNames.txt"))
@@ -41,6 +42,8 @@ for strInputNucs in Glob(sfle.d(fileDirInput,"*nucs.fna")):
 	file_out2 = oo.ftmp("out.genome")
 
     #--Tmp Files--#
+	fnaScreened = oo.ftmp(strDB + "screened.fna")
+	txtScreenLog = oo.ftmp(strDB + "screenlog.txt")
 	txtGS    = oo.ftmp(strDB + "gs.txt")
 	stderrSim = oo.ftmp(strDB + "sim.log")
 	fastqSim = oo.ftmp(strDB + "_single.fastq")
@@ -50,6 +53,7 @@ for strInputNucs in Glob(sfle.d(fileDirInput,"*nucs.fna")):
 
     #--Programs--#
 	SimpleSim        = oo.fsrc("simplesim.py")
+	ScreenNucs      = oo.fsrc("ScreenNucs.py")
 	GemReads	      = oo.fsrc("gemsim" + os.sep + "GemReads.py")
 	Fastq2Fasta      = oo.fsrc("fastq2fasta.py")
 	CPUnix = "cp"
@@ -58,28 +62,32 @@ for strInputNucs in Glob(sfle.d(fileDirInput,"*nucs.fna")):
 	stubGemSim = sfle.d(fileDirTmp,strDB)
 
     #--Dirs------"
-
+	dirGenomes = sfle.d("input","metagenome","input","genomes")
 	dirGemSimRef   = sfle.d("output","metagenome","tmp","GSRefGenomes")
 
-	#Make dirFasta
-	#Make softlink to dirGenomes,put it in dirGemSimRef
+	#<ADDITIONAL THINGS TO DO>
+	#Tell sfle to create dirGemSimRef
+	#Copy file from "input/metagenome/genomes/*genome to
 
+	#Screen out nucleotide seqs that do not have a corresponding protein sequwnce
+	oo.pipe([fnaNucs,faaProts],[fnaScreened,txtScreenLog],ScreenNucs,out=fnaScreened,nucs=fnaNucs,prots=faaProts,log=txtScreenLog)
 
     #Make individual fasta files for each gene, make the abundance table and gold standard
-	oo.pipe(fnaNucs,[txtAbundance,txtGS], SimpleSim,nucs=fnaNucs,N=150,muS=1,muG=6.25,gold=txtGS,genomes=txtGenomes,fastadir=dirGemSimRef,abund=txtAbundance,padgenome=fnaPadGenome)
+	oo.pipe(fnaScreened,[txtAbundance,txtGS], SimpleSim,nucs=fnaNucs,N=150,muS=1,muG=1,gold=txtGS,genomes=txtGenomes,fastadir=dirGemSimRef,abund=txtAbundance,padgenome=fnaPadGenome,padlength=100, dirgenomes= dirGenomes,pctspike=.05)
 	Default(txtAbundance)
 
 
     #Incorporate individual nucs into a synthetic metagenome, along  with the other genomes in "input/genomes", using GemReads.py
-	oo.pipe([txtAbundance],[stderrSim,fastqSim],GemReads,R=dirGemSimRef, n=5000000,l=100, m=zipModel,c="",q=64,o=stubGemSim,a = txtAbundance )
+	oo.pipe([txtAbundance],[stderrSim,fastqSim],GemReads,R=dirGemSimRef, n=5000000,l=100, m=zipModel,c="",q=64,o=stubGemSim,a = txtAbundance)
 	Default(fastqSim)
     #oo.pipe([txtAbundance],[stderrSim,fastqSim],GemReads,R=dirGenomes, n=5000000,l=100, m=zipModel,c="",q=64,o=stubGemSim,a = txtAbundance )
 
-	"""
+
 	oo.pipe(fastqSim,fastaSim,Fastq2Fasta)
+
 
     #Cut out excess text, reduce gene lables for spiked genes to ">USR_NAME_END"
 	oo.pipe(fastaSim,fastaFinal,"sed",e="s/^>.*\(USR_.*_END\).*$/>\\1/g")
  	Default(fastaFinal)
-	"""
+
 

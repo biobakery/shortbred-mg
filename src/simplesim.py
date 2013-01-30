@@ -32,6 +32,7 @@ parser.add_argument('--padgenome', type=str, dest='sPadGenome', help='Enter the 
 parser.add_argument('--gold', type=str, dest='sGold', help='Enter the path and name of the gold standard file.',default="goldstandard.txt")
 parser.add_argument('--abund', type=str, dest='sAF', help='Enter the path and name of the abundance file.',default="abundance.txt")
 parser.add_argument('--dirgenomes', type=str, dest='sDirGenomes', help='Enter the path to the genomefiles.',default="")
+parser.add_argument('--pctspike', type=float, dest='dPctSpike', help='Enter % reads that should come from spiked genes.',default=.05)
 
 
 
@@ -59,6 +60,12 @@ def RandSlice(iLen, seqGene):
 	strPad = seqGene.seq[iStart:(iStart+iLen)]
 	return strPad
 
+def CountBases(strFileFasta):
+	iBases = 0
+	for seq in SeqIO.parse(strFileFasta, "fasta"):
+		iBases = iBases + len(seq)
+	return iBases
+
 #Load in the padding material
 for seq in SeqIO.parse(args.sPadGenome, "fasta"):
 	aseqPad.append(seq)
@@ -83,22 +90,52 @@ for i in range(iDraws):
     dRandArray = dRandArray + [(random.lognormvariate(args.dSpikeMu,1))]*iSetSize
 
 #Give each of the bugs/genomes a lognormal value
+#Make an array [BugName, LNDraw, Length, Length*LNDraw]
 for strGeneName in astrPickedGenomes:
-    aGeneData = [strGeneName, random.lognormvariate(args.dGenomeMu,1), "NA","NA"]
-    aaGoldStandard.append(aGeneData)
+	dRand =random.lognormvariate(args.dGenomeMu,1)
+	iBases = CountBases(args.sDirGenomes + os.sep + strGeneName)
+	aGeneData = [strGeneName, dRand, iBases, iBases*dRand]
+	aaGoldStandard.append(aGeneData)
+
+#Sum up the total bug bases. we will set other parameters so that this is (1-dPctSpike)%
+#of the bases of the metagenome. So if we want 5% of the reads to be spiked,
+#we will make the bugs 95% of the metagenome (by BASES, not COUNT).
+
+adBugBases = (zip(*aaGoldStandard)[3])
+dTotBugBases = sum(adBugBases)
+
+dPctBugs = float(1)-args.dPctSpike
+
+dTotMGBases = dTotBugBases/dPctBugs
+
 
 #Assign the lognormal draw for each spiked gene.
 #Make an array where each row is [SpikedGeneName,lognormal val, GeneLength, TotGeneBases]
 for strGeneName in setPickedGenes:
-    aGeneData = [strGeneName, dRandArray.pop(), len(dictNucs[strGeneName])]
+    aGeneData = [strGeneName, dRandArray.pop(), len(dictNucs[strGeneName]) + 2*args.iPad]
     aGeneData.append(aGeneData[1]*aGeneData[2])
     aaGoldStandard.append(aGeneData)
+
+#Sum up the total bases for the spiked genes.
+adSpikedBases = (zip(*aaGoldStandard[-(args.iN):])[3])
+dTotSpikeBases = sum(adSpikedBases)
+
+dFactor = (dTotMGBases*.05)/dTotSpikeBases
+
+#Multiply each draw (for the spiked genes) by this factor
+for aLine in aaGoldStandard[-(args.iN):]:
+	aLine[1]=aLine[1]*dFactor
+	aLine[3]=aLine[3]*dFactor
+
 
 
 #Sum up the lognormal draws for everything (bugs/genomes + spiked genes), compute relative abundance
 #Write this info to the goldstandard file.
 adAbundance = (zip(*aaGoldStandard)[1])
 dTotAbundance = sum(adAbundance)
+
+adBases = (zip(*aaGoldStandard)[3])
+dBases = sum(adBases)
 
 #Print spiked genes as individual fasta files to "--fastadir"
 aaGenes = aaGoldStandard[-(args.iN):]
@@ -107,16 +144,17 @@ for astrLine in aaGenes:
     SeqIO.write(dictNucs[astrLine[0]], args.sFD + os.sep + astrLine[0]+".fasta", "fasta")
 
 
-fileGS.write("GeneName"+ "\t" + "Count" + "\t" + "Length" + "\t" + "TotBases" + "\t" +"RelAbundance" + "\n")
+fileGS.write("GeneName"+ "\t" + "Count" + "\t" + "Length" + "\t" + "TotBases" + "\t" +"RelCount" + "\t" + "RelBases" + "\n")
 for aLine in aaGoldStandard:
-    fileGS.write(aLine[0]+ "\t" + str(aLine[1]) + "\t" +str(aLine[2]) + "\t" + str(aLine[3]) +"\t" + str(aLine[1]/dTotAbundance) )
-    fileGS.write("\n")
+    fileGS.write(aLine[0]+ "\t" + str(aLine[1]) + "\t" +str(aLine[2]) + "\t" + str(aLine[3]) +"\t" + str(aLine[1]/dTotAbundance) + "\t" + str(aLine[3]/dBases) + "\n" )
+
 
 
 
 
 #Make the abundance text file
 fileAbund = open(args.sAF,'w')
+
 
 #Print lines for bugs/genomes
 for aLine in aaGoldStandard[:-(args.iN)]:
@@ -125,7 +163,7 @@ for aLine in aaGoldStandard[:-(args.iN)]:
 
 #Print lines for spiked genes
 for aLine in aaGoldStandard[-(args.iN):]:
-	fileAbund.write(astrLine[0]+".fasta" + "\t" + str("{0:.6f}".format(aLine[1]/dTotAbundance)) + "\n")
+	fileAbund.write(aLine[0]+".fasta" + "\t" + str("{0:.6f}".format(aLine[1]/dTotAbundance)) + "\n")
 	RandSlice(args.iPad,random.choice(aseqPad))
 
 fileAbund.close()
