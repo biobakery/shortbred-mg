@@ -120,7 +120,7 @@ for strGeneName in setPickedGenes:
 adSpikedBases = (zip(*aaGoldStandard[-(args.iN):])[3])
 dTotSpikeBases = sum(adSpikedBases)
 
-dFactor = (dTotMGBases*.05)/dTotSpikeBases
+dFactor = (dTotMGBases*args.dPctSpike)/dTotSpikeBases
 
 #Multiply each draw (for the spiked genes) by this factor
 for aLine in aaGoldStandard[-(args.iN):]:

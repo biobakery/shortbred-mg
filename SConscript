@@ -28,66 +28,91 @@ Import( "*" )
 
 oo = sfleoo.ooSfle(  fileDirOutput = fileDirOutput, fileDirTmp = fileDirTmp, fileDirInput=fileDirInput )
 
+astrRuns = ["10","25"]
 
-for strInputNucs in Glob(sfle.d(fileDirInput,"*nucs.fna")):
-	strDB	 		= os.path.basename(str(strInputNucs).replace( "nucs.fna", "" ))
-	print(strDB)
+for strRun in astrRuns:
+	if (strRun == "10"):
+		iGenes = 500
+		dSpike = int(strRun)/100.0
+	elif (strRun == "25"):
+		iGenes = 1000
+		dSpike = int(strRun)/100.0
 
-    #--Input Files--#
-	faaProts = os.path.abspath(oo.fin(strDB + ".input.faa"))
-	fnaNucs  = os.path.abspath(oo.fin(strDB + "nucs.fna"))
-	zipModel = os.path.abspath(oo.fin("ill100v5_s.gzip") )
-	txtGenomes = os.path.abspath(oo.fin("GenomeNames.txt"))
-	fnaPadGenome = os.path.abspath(oo.fin("genomes" + os.sep + "b.longum.genome"))
-	file_out2 = oo.ftmp("out.genome")
+	for strInputNucs in Glob(sfle.d(fileDirInput,"*.input.faa")):
+		strDB	 		= os.path.basename(str(strInputNucs).replace( ".input.faa", "" ))
+		print(strDB)
 
-    #--Tmp Files--#
-	fnaScreened = oo.ftmp(strDB + "screened.fna")
-	txtScreenLog = oo.ftmp(strDB + "screenlog.txt")
-	txtGS    = oo.ftmp(strDB + "gs.txt")
-	stderrSim = oo.ftmp(strDB + "sim.log")
-	fastqSim = oo.ftmp(strDB + "_single.fastq")
-	fastaSim = oo.ftmp(strDB + ".fasta")
-	fastaFinal = oo.ftmp(strDB + "sim.fasta")
-	txtAbundance = (oo.ftmp(strDB + "abund.txt"))
-
-    #--Programs--#
-	SimpleSim        = oo.fsrc("simplesim.py")
-	ScreenNucs      = oo.fsrc("ScreenNucs.py")
-	GemReads	      = oo.fsrc("gemsim" + os.sep + "GemReads.py")
-	Fastq2Fasta      = oo.fsrc("fastq2fasta.py")
-	CPUnix = "cp"
-
-    #---Parameters---#
-	stubGemSim = sfle.d(fileDirTmp,strDB)
-
-    #--Dirs------"
-	dirGenomes = sfle.d("input","metagenome","input","genomes")
-	dirGemSimRef   = sfle.d("output","metagenome","tmp","GSRefGenomes")
-
-	#<ADDITIONAL THINGS TO DO>
-	#Tell sfle to create dirGemSimRef
-	#Copy file from "input/metagenome/genomes/*genome to
-
-	#Screen out nucleotide seqs that do not have a corresponding protein sequwnce
-	oo.pipe([fnaNucs,faaProts],[fnaScreened,txtScreenLog],ScreenNucs,out=fnaScreened,nucs=fnaNucs,prots=faaProts,log=txtScreenLog)
-
-    #Make individual fasta files for each gene, make the abundance table and gold standard
-	oo.pipe(fnaScreened,[txtAbundance,txtGS], SimpleSim,nucs=fnaNucs,N=150,muS=1,muG=1,gold=txtGS,genomes=txtGenomes,fastadir=dirGemSimRef,abund=txtAbundance,padgenome=fnaPadGenome,padlength=100, dirgenomes= dirGenomes,pctspike=.05)
-	Default(txtAbundance)
+	    #--Input Files--#
+		faaProts = os.path.abspath(oo.fin(strDB + ".input.faa"))
 
 
-    #Incorporate individual nucs into a synthetic metagenome, along  with the other genomes in "input/genomes", using GemReads.py
-	oo.pipe([txtAbundance],[stderrSim,fastqSim],GemReads,R=dirGemSimRef, n=5000000,l=100, m=zipModel,c="",q=64,o=stubGemSim,a = txtAbundance)
-	Default(fastqSim)
-    #oo.pipe([txtAbundance],[stderrSim,fastqSim],GemReads,R=dirGenomes, n=5000000,l=100, m=zipModel,c="",q=64,o=stubGemSim,a = txtAbundance )
+		"""
+        #NOTE: there are two different ARDB fna files:
+			#ARDBnucs.fna = ~160 real nuc seqs,
+			#ARDBbt.fna = 7,825 back translated sequences (using backtranseq from EMBOSS)
+
+			Please select the one below needed for your project.
+		"""
+
+		if (strDB == "ARDB" and strRun != ""):
+			fnaNucs = os.path.abspath(oo.fin("ARDBbtnucs.fna"))
+		else:
+			fnaNucs  = os.path.abspath(oo.fin(strDB + "nucs.fna"))
+		zipModel = os.path.abspath(oo.fin("ill100v5_s.gzip") )
+		txtGenomes = os.path.abspath(oo.fin("GenomeNames.txt"))
+		fnaPadGenome = os.path.abspath(oo.fin("genomes" + os.sep + "b.longum.genome"))
+		file_out2 = oo.ftmp("out.genome")
+
+		strDB = strDB + strRun
+	    #--Tmp Files--#
+		fnaScreened = oo.ftmp(strDB + "screened.fna")
+		txtScreenLog = oo.ftmp(strDB + "screenlog.txt")
+		txtGS    = oo.ftmp(strDB + "gs.txt")
+		stderrSim = oo.ftmp(strDB + "sim.log")
+		fastqSim = oo.ftmp(strDB + "_single.fastq")
+		fastaSim = oo.ftmp(strDB + ".fasta")
+		fastaFinal = oo.ftmp(strDB + "sim.fasta")
+		txtAbundance = (oo.ftmp(strDB + "abund.txt"))
+
+	    #--Programs--#
+		SimpleSim        = oo.fsrc("simplesim.py")
+		ScreenNucs      = oo.fsrc("ScreenNucs.py")
+		GemReads	      = oo.fsrc("gemsim" + os.sep + "GemReads.py")
+		Fastq2Fasta      = oo.fsrc("fastq2fasta.py")
+		CPUnix = "cp"
+
+	    #---Parameters---#
+		stubGemSim = sfle.d(fileDirTmp,strDB)
+
+	    #--Dirs------"
+		dirGenomes = sfle.d("input","metagenome","input","genomes")
+		dirGemSimRef   = sfle.d("output","metagenome","tmp","GSRefGenomes")
+
+		#<ADDITIONAL THINGS TO DO>
+		#Tell sfle to create dirGemSimRef
+		#Copy file from "input/metagenome/genomes/*genome to
 
 
-	oo.pipe(fastqSim,fastaSim,Fastq2Fasta)
+
+		#Screen out nucleotide seqs that do not have a corresponding protein sequwnce
+		oo.pipe([fnaNucs,faaProts],[fnaScreened,txtScreenLog],ScreenNucs,out=fnaScreened,nucs=fnaNucs,prots=faaProts,log=txtScreenLog)
+
+	    #Make individual fasta files for each gene, make the abundance table and gold standard
+		oo.pipe(fnaScreened,[txtAbundance,txtGS], SimpleSim,nucs=fnaScreened,N=iGenes,muS=1,muG=1,gold=txtGS,genomes=txtGenomes,fastadir=dirGemSimRef,abund=txtAbundance,padgenome=fnaPadGenome,padlength=100, dirgenomes= dirGenomes,pctspike=dSpike)
+		Default(txtAbundance)
 
 
-    #Cut out excess text, reduce gene lables for spiked genes to ">USR_NAME_END"
-	oo.pipe(fastaSim,fastaFinal,"sed",e="s/^>.*\(USR_.*_END\).*$/>\\1/g")
- 	Default(fastaFinal)
+	    #Incorporate individual nucs into a synthetic metagenome, along  with the other genomes in "input/genomes", using GemReads.py
+		oo.pipe([txtAbundance],[stderrSim,fastqSim],GemReads,R=dirGemSimRef, n=5000000,l=100, m=zipModel,c="",q=64,o=stubGemSim,a = txtAbundance)
+		Default(fastqSim)
+	    #oo.pipe([txtAbundance],[stderrSim,fastqSim],GemReads,R=dirGenomes, n=5000000,l=100, m=zipModel,c="",q=64,o=stubGemSim,a = txtAbundance )
+
+
+		oo.pipe(fastqSim,fastaSim,Fastq2Fasta)
+
+
+	    #Cut out excess text, reduce gene lables for spiked genes to ">USR_NAME_END"
+		oo.pipe(fastaSim,fastaFinal,"sed",e="s/^>.*\(USR_.*_END\).*$/>\\1/g")
+	 	Default(fastaFinal)
 
 
