@@ -27,6 +27,10 @@ Import( "*" )
 
 
 oo = sfleoo.ooSfle(  fileDirOutput = fileDirOutput, fileDirTmp = fileDirTmp, fileDirInput=fileDirInput )
+#--Constants--#
+iReads = 5000000
+iReadLen = 100
+zipModel = os.path.abspath(oo.fin("ill100v5_s.gzip") ) # Illumina Model
 
 #--Programs--#
 SimpleSim        = oo.fsrc("simplesim.py")
@@ -89,7 +93,7 @@ for strDB in ["ARDB","VF"]:
 
 
 	afnaCleanGenomes.sort()
-	print "There are", len(afnaCleanGenomes), " genomes."
+	#print "There are", len(afnaCleanGenomes), " genomes."
 	Default(afnaCleanGenomes)
 
 
@@ -116,7 +120,7 @@ for strDB in ["ARDB","VF"]:
 			fnaNucs  = os.path.abspath(oo.fin(strDB + "nucs.fna"))
 		######################################################################
 
-		zipModel = os.path.abspath(oo.fin("ill100v5_s.gzip") )
+
 		txtGenomes = os.path.abspath(oo.fin("GenomeNames.txt"))
 
 		if (c_strCLEANGENOMES == "Y"):
@@ -125,7 +129,12 @@ for strDB in ["ARDB","VF"]:
 
 			# Please change this if you change dirCleanGenomes. GemSim will not take this
 			# as absolute path, so I use the path relative to sfle.
-			dirGemSimRef   = dirCleanGenomes.replace(dirWD,"")
+			dirGemSimRef   = sfle.d("output","metagenome","tmp",strDB,"clean_genomes")
+
+			#print "DIRECTORY TESTING"
+			#print(dirWD)
+			#print(str(dirCleanGenomes))
+			#print(dirGemSimRef)
 
 
 		else:
@@ -136,21 +145,27 @@ for strDB in ["ARDB","VF"]:
 		file_out2 = oo.ftmp("out.genome")
 		strDBRun = strDB + strRun
 		dirDBRun = sfle.d(fileDirTmp,strDBRun)
+		print "The run is ",strDBRun
 
 		#--Tmp Files--#
 		fnaScreened =sfle.d(dirDBRun,strDBRun+ "screened.fna")
 		txtScreenLog =sfle.d(dirDBRun,strDBRun+ "screenlog.txt")
 		txtGS    =sfle.d(dirDBRun,strDBRun+ "gs.txt")
 		stderrSim =sfle.d(dirDBRun,strDBRun+ "sim.log")
-		fastqSim =sfle.d(dirDBRun,strDBRun+ "_single.fastq")
+
 		fastaSim =sfle.d(dirDBRun,strDBRun+ ".fasta")
 		fastaFinal =sfle.d(dirDBRun,strDBRun+ "sim.fasta")
 		txtAbundance =sfle.d(dirDBRun,strDBRun+ "abund.txt")
 
 
+		# Gem is peculiar about its output. You have to specify a prefix instead of the full output file.
+		stubGemSim = sfle.d(dirDBRun,strDBRun)
+		fastqSim =sfle.d(dirDBRun,strDBRun+ "_single.fastq")
+		print stubGemSim
+		print fastqSim
 
 	    #---Parameters---#
-		stubGemSim = sfle.d(fileDirTmp,strDB)
+
 
 		#Screen out nucleotide seqs that do not have a corresponding protein sequwnce
 		oo.pipe([fnaNucs,faaInputProts],[fnaScreened,txtScreenLog],ScreenNucs,out=fnaScreened,nucs=fnaNucs,prots=faaInputProts,log=txtScreenLog)
@@ -164,7 +179,7 @@ for strDB in ["ARDB","VF"]:
 
 
 	    #Incorporate individual nucs into a synthetic metagenome, along  with the other genomes in "input/genomes", using GemReads.py
-		oo.pipe([txtAbundance,afnaCleanGenomes],[stderrSim,fastqSim],GemReads,R=dirGemSimRef, n=5000000,l=100, m=zipModel,c="",q=64,o=stubGemSim,a = txtAbundance)
+		oo.pipe([txtAbundance,afnaCleanGenomes],[stderrSim,fastqSim],GemReads,R=dirGemSimRef, n=iReads,l=iReadLen, m=zipModel,c="",q=64,o=stubGemSim,a = txtAbundance)
 		Default(fastqSim)
 
 		oo.pipe(fastqSim,fastaSim,Fastq2Fasta)

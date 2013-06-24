@@ -142,20 +142,20 @@ streamTmpGenome = open(args.strTmpGenome,'w')
 iMaxGeneLineLength = 800
 iLineCount = 0
 iGeneCount = 0
+strName = ""
 
 for strLine in streamGenome:
 	iLineCount+=1
 	if strLine.find(">")==0:
-		#print "Found it"
 		iGeneCount+=1
 		iLineCount=0
 		strLine = strLine[:7] + "_" + str(iGeneCount).zfill(3) + '\n'
-		#print iGeneCount, strLine
+		strName = strLine[1:7]
+
 	if iLineCount > iMaxGeneLineLength:
 		iGeneCount+=1
 		iLineCount = 0
-		strLine = ">Break_" + str(iGeneCount).zfill(3) + '\n'
-		#print iGeneCount, strLine
+		strLine = ">" + strName + "_brk_" + str(iGeneCount).zfill(3) + '\n'
 	streamTmpGenome.write(strLine)
 streamTmpGenome.close()
 streamGenome.close()
@@ -164,16 +164,10 @@ streamGenome.close()
 dictOverlap = {}
 dictGenes = {}
 for gene in SeqIO.parse(args.strTmpGenome, "fasta"):
-	if gene.id in dictGenes.keys():
-		print "Already had", gene.id
-	#print gene.id
 	dictOverlap[gene.id] = len(gene)*[0]
 	dictGenes[gene.id] = gene
 
-print "Diagnostics"
-print iGeneCount
-print len(dictOverlap.keys())
-print len(dictGenes.keys())
+
 
 #Make usearch db
 strDBName = str(dirTmp) + os.sep + os.path.basename(str(args.strProts)) + ".udb"
