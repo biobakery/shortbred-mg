@@ -156,6 +156,7 @@ for strDB in ["ARDB","VF"]:
 		fastaSim =sfle.d(dirDBRun,strDBRun+ ".fasta")
 		fastaFinal =sfle.d(dirDBRun,strDBRun+ "sim.fasta")
 		txtAbundance =sfle.d(dirDBRun,strDBRun+ "abund.txt")
+		txtCount =sfle.d(dirDBRun,strDBRun+ "count.txt")
 
 
 		# Gem is peculiar about its output. You have to specify a prefix instead of the full output file.
@@ -179,7 +180,7 @@ for strDB in ["ARDB","VF"]:
 
 
 	    #Incorporate individual nucs into a synthetic metagenome, along  with the other genomes in "input/genomes", using GemReads.py
-		oo.pipe([txtAbundance,afnaCleanGenomes],[stderrSim,fastqSim],GemReads,R=dirGemSimRef, n=iReads,l=iReadLen, m=zipModel,c="",q=64,o=stubGemSim,a = txtAbundance)
+		oo.pipe([txtAbundance,afnaCleanGenomes],[stderrSim,fastqSim],GemReads,R=dirGemSimRef, n=iReads,l="d", m=zipModel,c="",q=64,o=stubGemSim,a = txtAbundance)
 		Default(fastqSim)
 
 		oo.pipe(fastqSim,fastaSim,Fastq2Fasta)
@@ -187,3 +188,7 @@ for strDB in ["ARDB","VF"]:
 	    #Cut out excess text, reduce gene lables for spiked genes to ">USR_NAME_END"
 		oo.pipe(fastaSim,fastaFinal,"sed",e="s/^>.*\(USR_.*_END\).*$/>\\1/g")
 	 	Default(fastaFinal)
+
+		oo.ex(fastaFinal,txtCount,"grep",args=[("-e",">"),("-c","")],outpipe= True)
+		#oo.ex(fastaFinal,txtCount,"grep",e="\">\"",c="",verbose=True)
+		Default(txtCount)
