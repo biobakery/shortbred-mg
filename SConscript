@@ -100,12 +100,12 @@ for strDB in ["ARDB","VF"]:
 			iReadLen = "d" # "d" tells GemSim ("GemReads.py") to use the empirical model for length
 			zipModel = os.path.abspath(oo.fin("ill100v5_s.gzip") ) # Illumina Model
 			iPadLength = 100
-		elif strMG== "454-mockYAT":
+		elif strMG== "454_mockYAT":
 			iReads = 155890
 			iReadLen = "d"
 			zipModel = os.path.abspath(oo.fin("r454ti_s.gzip") ) # 454 Model
 			iPadLength = 450
-		elif strMG=="454-deep":
+		elif strMG=="454_deep":
 			iReads = 2000000
 			iReadLen = "d"
 			zipModel = os.path.abspath(oo.fin("r454ti_s.gzip") ) # 454 Model
