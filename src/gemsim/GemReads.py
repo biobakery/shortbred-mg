@@ -3,26 +3,26 @@
 # Copyright (C) 2010, Kerensa McElroy.
 # kerensa@unsw.edu.au
 
-# This file is part of the sequence simulator GemSIM. 
+# This file is part of the sequence simulator GemSIM.
 # It is used to calculate simulated next-gen sequencing
-# reads, based on a set of reference genomes and an 
+# reads, based on a set of reference genomes and an
 # error model.
 
-# GemSIM is free software; it may be redistributed and 
-# modified under the terms of the GNU General Public 
+# GemSIM is free software; it may be redistributed and
+# modified under the terms of the GNU General Public
 # License as published by the Free Software Foundation,
 # either version 3 of the License, or (at your option)
 # any later version.
 
 # GemSIM is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY, without even the implied 
+# but WITHOUT ANY WARRANTY, without even the implied
 # warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-# PURPOSE. See the GNU General Public License for more 
+# PURPOSE. See the GNU General Public License for more
 # details.
 
 # You should have recieved a copy of the GNU General Public
-# License along with GemSIM. If not, see 
-# http://www.gnu.org/licenses/. 
+# License along with GemSIM. If not, see
+# http://www.gnu.org/licenses/.
 
 
 import sys
@@ -63,7 +63,7 @@ def getRef(refFile):
         sys.exit('Cannot find reference file '+refFile+'. Please check pathname.')
     i=f.readline()
     head=i[1:51].rstrip()
-    i=f.readline().rstrip()    
+    i=f.readline().rstrip()
     while i:
         if i[0]!='>':
             ref+=i.rstrip()
@@ -81,7 +81,7 @@ def getRef(refFile):
             choiceList.append((head,len(ref)))
             hdList.append(head)
             head=i[1:51].rstrip()
-            i=f.readline()    
+            i=f.readline()
             ref=''
     ref=ref.upper()
     for l in 'RYMKSWHBVD':
@@ -89,7 +89,7 @@ def getRef(refFile):
     name=refFile.split('/')[-1]
     refDict[head]=(ref,name)
     comDict[head]=Comp(ref)
-    choiceList.append((head,len(ref))) 
+    choiceList.append((head,len(ref)))
     rdlog.debug('Reference file successfully parsed.')
     return refDict,comDict, choiceList
 
@@ -116,7 +116,7 @@ def getMet(directory,genDir, abund):
         val=ab[k]
         val=val/sum
         ab[k]=val
-    path1='./'+directory
+    path1=directory
     path2='./'+genDir
     for k in key:
         file=os.path.join(path1,k)
@@ -221,12 +221,12 @@ def readGen2(reference,cRef,pos,dir,readLen,genos,inter,mx2,insD2,delD2,gQ,bQ,iQ
             start=pos-inter+1
             end=start+readPlus
             if start>=0:
-                read=reference[start:end] 
+                read=reference[start:end]
             elif start<0 and end >=0:
                 read=reference[start:]+reference[:end]
                 start+=refLen
             elif start < 0 and end <0:
-                read=reference[start:end] 
+                read=reference[start:end]
                 start+=refLen
             if genos!='':
                 read=mutate(read,start,genos,refLen,1,readPlus,hd)
@@ -260,11 +260,11 @@ def mkInserts(mx,insD):
         indicies=p.split('.')
         tot=mx[int(indicies[0])][int(indicies[1])][int(indicies[2])][int(indicies[3])][int(indicies[4])][int(indicies[5])][5]
         insertKeys=insD[p].keys()
-        insertKeys.sort() 
+        insertKeys.sort()
         insertList=[]
         iSum=0
         for i in insertKeys:
-            insertList.append((i,insD[p][i])) 
+            insertList.append((i,insD[p][i]))
             iSum+=0
         insertList.append(('',tot-iSum))
         insert=bisect_choiceTUP(insertList)
@@ -279,7 +279,7 @@ def mkDels(mx,delD):
     for p in posKeys:
         indicies=p.split('.')
         tot=mx[int(indicies[0])][int(indicies[1])][int(indicies[2])][int(indicies[3])][int(indicies[4])][int(indicies[5])][5]
-        items=delD[p] 
+        items=delD[p]
         items.reverse()
         items.append(tot-sum(items))
         items.reverse()
@@ -336,7 +336,7 @@ def mutate(read,ind,gens,refLen,dir,readLn,hd):
     """Adds predetermined mutations to reads."""
     d={'A':'T','T':'A','C':'G','G':'C','a':'t','t':'a','c':'g','g':'c','N':'N','n':'n'}
     if gens=={}:
-        return read    
+        return read
     else:
         chroms=gens.keys()
         if hd not in chroms:
@@ -349,7 +349,7 @@ def mutate(read,ind,gens,refLen,dir,readLn,hd):
                         read1=read[:p-(ind+1)]+gens[hd][p]
                         read1=read1+read[p-ind:]
                         read=read1
-                    elif p<=ind+readLn-refLen: 
+                    elif p<=ind+readLn-refLen:
                         read1=read[:refLen-ind+p-1]+gens[hd][p]
                         read1+=read[refLen-ind+p:]
                         read=read1
@@ -369,17 +369,17 @@ def mutate(read,ind,gens,refLen,dir,readLn,hd):
 def parseModel(gzipFile,paired,readlen):
     """prepares error models for input to mkErrors."""
     rdlog.debug("Parsing error model file")
-    try: 
+    try:
         file=gzip.open(gzipFile,'rb')
     except IOError:
-        rdlog.error("Cannot find input error model file "+gzipFile+". Please check pathname.") 
+        rdlog.error("Cannot find input error model file "+gzipFile+". Please check pathname.")
         sys.exit()
     if paired:
         modReadLen=cPickle.load(file)
         if readlen!='d' and readlen>modReadLen:
             rdlog.error("Inappropriate read length chosen for model. Maximum for this model: "+str(modReadLen))
             file.close()
-            sys.exit() 
+            sys.exit()
         mx1=cPickle.load(file)
         mx2=cPickle.load(file)
         insD1=cPickle.load(file)
@@ -400,7 +400,7 @@ def parseModel(gzipFile,paired,readlen):
         if readlen!='d' and readlen>modReadLen:
             rdlog.error("Inappropriate read length chosen for model. Maximum for this model: "+str(modReadLen))
             file.close()
-            sys.exit() 
+            sys.exit()
         mx=cPickle.load(file)
         insD=cPickle.load(file)
         delD=cPickle.load(file)
@@ -410,8 +410,8 @@ def parseModel(gzipFile,paired,readlen):
         readCount=cPickle.load(file)
         rdLenD=cPickle.load(file)
         file.close()
-        return mx,insD,delD,gQualL,bQualL,iQualL,readCount,rdLenD 
-        
+        return mx,insD,delD,gQualL,bQualL,iQualL,readCount,rdLenD
+
 def mkErrors(read,readLen,mx,insD,delD,gQ,bQ,iQ,qual):
     """Adds random errors to read."""
     inds={'A':0,'T':1,'G':2,'C':3,'N':4,'a':0,'t':1,'g':2,'c':3,'n':4}
@@ -427,7 +427,7 @@ def mkErrors(read,readLen,mx,insD,delD,gQ,bQ,iQ,qual):
     else:
         read='NNNN'+read
     pos+=1
-    while pos<=readLen and pos<len(read)-4:                 
+    while pos<=readLen and pos<len(read)-4:
         prev=read[pos:pos+4]
         after=read[pos+4]
         d0=pos
@@ -456,7 +456,7 @@ def mkErrors(read,readLen,mx,insD,delD,gQ,bQ,iQ,qual):
                 except:
                     gPos-=1
             if success==False:
-                quals+=chr(30+qual) 
+                quals+=chr(30+qual)
         elif val>c:
             read=read[:pos+3]+'N'+read[pos+4:]
             bPos=pos-1
@@ -494,7 +494,7 @@ def mkErrors(read,readLen,mx,insD,delD,gQ,bQ,iQ,qual):
                 if success==False:
                     quals+=chr(2+qual)
         elif val>a:
-            read=read[:pos+3]+'T'+read[pos+4:] 
+            read=read[:pos+3]+'T'+read[pos+4:]
             bPos=pos-1
             while bPos>=0:
                 try:
@@ -541,7 +541,7 @@ def mkErrors(read,readLen,mx,insD,delD,gQ,bQ,iQ,qual):
     quals=quals[:readLen]
     if len(quals)!=len(read):
         sys.exit()
-    return read,quals      
+    return read,quals
 
 def Comp(sequence):
     """ complements a sequence, preserving case."""
@@ -585,11 +585,11 @@ def usage():
     print 'listing SNP locations and frequencies, and creates a simulated data set'
     print 'of random reads, as would be produced by a next-gen sequencing run.'
     print 'Output is in fastq format, suitable for input into popular alignment'
-    print 'software.' 
+    print 'software.'
     print '\nOptions:'
     print '      -h prints these instructions.'
-    print '      -r reference genome, in fasta format.' 
-    print '      -R Only for metagenome projects. Directory containing references.' 
+    print '      -r reference genome, in fasta format.'
+    print '      -R Only for metagenome projects. Directory containing references.'
     print '      -a Only for metagenome projects. Species-abundance file.'
     print '      -n number of reads to produce. For paired end reads, number of pairs.'
     print '      -g haplotype file, specifying location and frequency of snps.'
@@ -597,10 +597,10 @@ def usage():
     print '      -l length of reads. Integer value, or -l d for empirical distribution.'
     print '      -m error model file *_single.gzip or *_paired.gzip.'
     print '      -c use this flag if you wish to draw reads from a circular genome.'
-    print '      -q quality score offset. Usually 33 or 64 (see manual).' 
+    print '      -q quality score offset. Usually 33 or 64 (see manual).'
     print '      -o output file name prefix.'
     print '      -u Mean fragment length for paired end reads. -u d for empirical.'
-    print '      -s standard deviation for fragment length. Use only with -u and -p.' 
+    print '      -s standard deviation for fragment length. Use only with -u and -p.'
     print '      -p use only to create paired end reads.\n\n'
 
 def main(argv):
@@ -648,7 +648,7 @@ def main(argv):
             if arg=='d':
                 mean='emp'
             else:
-                mean=int(arg) 
+                mean=int(arg)
         elif opt == '-s':
             stdv=int(arg)
         elif opt == '-g':
@@ -712,7 +712,7 @@ def main(argv):
         delDict1=mkDels(mx1,delD1)
         delDict2=mkDels(mx2,delD2)
     #choose good quality bases
-    gQList=[]             
+    gQList=[]
     for i in (gQualL):
         gL=[]
         keys=i.keys()
@@ -732,7 +732,7 @@ def main(argv):
     #choose qualities for inserts
     iQList=[]
     for i in (iQualL):
-        iL=[] 
+        iL=[]
         keys=i.keys()
         keys.sort()
         for k in keys:
@@ -766,11 +766,11 @@ def main(argv):
     #track read origin
     readOri={}
     for r,c in refList:
-        readOri[r]=0    
+        readOri[r]=0
     while count<=number:
         hd=reference()
         ref,refFile=refDict[hd]
-        cRef=comDict[hd] 
+        cRef=comDict[hd]
         readOri[hd]+=1
         refLen=len(ref)
         if not paired:
@@ -790,7 +790,7 @@ def main(argv):
                     inter=interval()
                 else:
                     inter=int(random.normalvariate(mean,stdv))
-            if val > unAlign0+unAlign1:        
+            if val > unAlign0+unAlign1:
                 read1,pos,dir,quals1=readGen1(ref,cRef,refLen,ln1,genDict[refFile](),inter,mx1,insDict1,delDict1,gQList,bQList,iQList,qual,circular,hd)
                 read2,quals2=readGen2(ref,cRef,pos, dir, ln2, genDict[refFile](),inter,mx2,insDict2,delDict2,gQList,bQList,iQList,qual,circular,hd)
                 p1=pos

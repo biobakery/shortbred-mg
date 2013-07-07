@@ -33,7 +33,7 @@ parser.add_argument('--gold', type=str, dest='sGold', help='Enter the path and n
 parser.add_argument('--abund', type=str, dest='sAF', help='Enter the path and name of the abundance file.',default="abundance.txt")
 parser.add_argument('--dirgenomes', type=str, dest='sDirGenomes', help='Enter the path to the genomefiles.',default="")
 parser.add_argument('--pctspike', type=float, dest='dPctSpike', help='Enter % reads that should come from spiked genes.',default=.05)
-
+parser.add_argument('--log', type=str, dest='sLog', help='Enter the path and name of the log file.',default="log.txt")
 
 
 #parser.add_argument('--pct', type=float, dest='dPct', help='Enter the starting percentage, <= .30.', default=.20)
@@ -65,6 +65,14 @@ def CountBases(strFileFasta):
 	for seq in SeqIO.parse(strFileFasta, "fasta"):
 		iBases = iBases + len(seq)
 	return iBases
+
+def check_create_dir( strDir ):
+
+	if not os.path.exists( strDir ):
+		os.makedirs( strDir )
+	return strDir
+
+check_create_dir(args.sFD)
 
 #Load in the padding material
 for seq in SeqIO.parse(args.sPadGenome, "fasta"):
@@ -194,7 +202,9 @@ fileGS.write("Gene copies: " + str(iTotGenes) + "\n")
 fileGS.write("Total bases: " + str(iTotBases) + "\n")
 """
 fileGS.close()
-
+fileLog = open(args.sLog,'w')
+fileLog.write("Ran fine.")
+fileLog.close()
 
 
 
