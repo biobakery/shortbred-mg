@@ -73,7 +73,7 @@ RemovePosGenes = oo.fsrc("RemovePosGenes.py")
 for strDB in ["ARDB","VF"]:
 	faaInputProts = os.path.abspath(sfle.d(fileDirInput,strDB+".input.faa"))
 
-	for strMG in ["Illumina","454_mockYAT","454_deep"]:
+	for strMG in ["Illumina","454_mockYAT","454_deep","small"]:
 	#for strMG in ["454_mockYAT"]:
 
 		if strMG == "Illumina":
@@ -91,6 +91,11 @@ for strDB in ["ARDB","VF"]:
 			iReadLen = "d"
 			zipModel = os.path.abspath(sfle.d(fileDirSrc,"gemsim","models","r454ti_s.gzip"))  # 454 Model
 			iPadLength = 450
+		elif strMG=="small":
+			iReads = 4000000
+			iReadLen = "d"
+			zipModel = os.path.abspath(oo.fin("ill100v5_s.gzip") )  # 454 Model
+			iPadLength = 100
 
 		for strRun in astrRuns:
 			if (strRun == "05"):
@@ -130,7 +135,7 @@ for strDB in ["ARDB","VF"]:
 				afnaTmpGenomes.append(fnaTmpGenome)
 
 			    #python /n/data/users/jkaminski/sfle/input/metagenome/src/RemovePosGenes.py --prots ARDB.input.faa --genome c.difficile.genome --tmpgenome tmp.fna --clean testclean.fna
-				oo.pipe([fnaGenome,faaInputProts],[fnaCleanGenome,fnaTmpGenome],RemovePosGenes,prots=faaInputProts, genome=fnaGenome,tmpgenome=fnaTmpGenome,clean=fnaCleanGenome,tmp=dirTmpProcessing,id=.80)
+				oo.pipe([fnaGenome,faaInputProts],[fnaCleanGenome,fnaTmpGenome],RemovePosGenes,prots=faaInputProts, genome=fnaGenome,tmpgenome=fnaTmpGenome,clean=fnaCleanGenome,tmp=dirTmpProcessing,id=.90)
 				Default(fnaCleanGenome)
 
 			afnaCleanGenomes.sort()
