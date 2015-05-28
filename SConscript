@@ -167,6 +167,7 @@ for strDB in ["ARDB","VF"]:
 			stderrSim =sfle.d(dirDBRun,strDBRun+ "sim.log")
 			stubGemSim = sfle.d(dirDBRun,strDBRun)
 			fastqSim =sfle.d(dirDBRun,strDBRun+ "_single.fastq")
+         
 			#Step 4 - Convert to fasta
 			fastaSim =sfle.d(dirDBRun,strDBRun+ ".fasta")
 			#Step 5 - Cut out excess text, reduce gene lables for spiked genes to ">USR_NAME_END"
@@ -185,6 +186,7 @@ for strDB in ["ARDB","VF"]:
 			abund=txtAbundance,padgenome=fnaPadGenome,padlength=iPadLength, dirgenomes= os.path.abspath(dirGenomes),pctspike=dSpike,log=txtLogSim)
 			Default(txtAbundance,txtGS,txtLogSim)
 
+                    ### NEW STEP ### 
 
 			#Step 3: Incorporate individual nucs into a synthetic metagenome, along  with the other genomes in "input/genomes", using GemReads.py
 			oo.pipe([txtAbundance,afnaCleanGenomes],[stderrSim,fastqSim],GemReads,R=dirGemSimRef, n=iReads,l="d", m=zipModel,c="",q=64,o=stubGemSim,a = txtAbundance)

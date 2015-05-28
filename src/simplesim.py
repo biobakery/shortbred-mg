@@ -34,7 +34,7 @@ parser.add_argument('--abund', type=str, dest='sAF', help='Enter the path and na
 parser.add_argument('--dirgenomes', type=str, dest='sDirGenomes', help='Enter the path to the genomefiles.',default="")
 parser.add_argument('--pctspike', type=float, dest='dPctSpike', help='Enter % reads that should come from spiked genes.',default=.05)
 parser.add_argument('--log', type=str, dest='sLog', help='Enter the path and name of the log file.',default="log.txt")
-
+parser.add_argument('--mutate', dest='bMutate', action='store_true', help='Add if you wish to mutate genes',default=False)
 
 #parser.add_argument('--pct', type=float, dest='dPct', help='Enter the starting percentage, <= .30.', default=.20)
 #parser.add_argument('--log', type=str, dest='sLog',help='Enter the name of the log file')
@@ -71,6 +71,34 @@ def check_create_dir( strDir ):
 	if not os.path.exists( strDir ):
 		os.makedirs( strDir )
 	return strDir
+ 
+def mutate_gene(seqIn, iMutations):
+    dPoint = .60
+    dInsert = .20
+    #dDelete = 1 - dPoint - dInsert
+    c_strNucs ="ATGC"
+    
+    for i in range(iMutations):
+        dChoice = random.random()
+        # Choose point mutation, insertion, or deletion
+        if dChoice <= dPoint:
+            iLoc = random.randint(0, len(seqIn)-1)
+            strChange = c_strNucs[random.randint(0,len(seqIn)-1)]
+            seqIn.seq[iLoc]= strChange
+        elif dChoice > dPoint and dChoice <= (dPoint + dInsert):
+            iLoc = random.randint(0, len(seqIn)-1)
+            iLength = random.randint(1,6)
+            strInsert = ""
+            for i in range(iLength):
+                strInsert = strInsert + c_strNucs[random.randint(0,len(seqIn)-1)]
+            seqIn.seq = seqIn[0:iLoc] + strInsert + seqIn[iLoc:]
+        elif dChoice > (dPoint + dInsert):
+            iLength = random.randint(1,6)            
+            iLoc = random.randint(0, len(seqIn)-1-iLength)
+            seqIn.seq = seqIn[0:iLoc] + seqIn[iLoc:]
+            
+        
+    
 
 check_create_dir(args.sFD)
 
